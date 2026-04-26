@@ -32,6 +32,7 @@ def register(user_data: UserCreate, request: Request, db: Session = Depends(get_
             username=user_data.username,
             display_name=user_data.full_name,
             hashed_password=hash_password(user_data.password),
+            role=user_data.role,
         )
 
         db.add(user)
@@ -55,10 +56,8 @@ def login(credentials: LoginRequest, request: Request, db: Session = Depends(get
                    ip_address=request.client.host, status="failed")
         db.commit()
         raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
-    if not user.is_active:
-        raise HTTPException(status_code=403, detail="Compte désactivé")
 
-    token_data = {"sub": str(user.id), "role": user.role.value}
+    token_data = {"sub": str(user.id), "role": user.role}
     access_token = create_access_token(token_data)
     refresh_token = create_refresh_token(token_data)
 

@@ -25,12 +25,20 @@ security = HTTPBearer()
 def hash_password(password: str):
     password_bytes = password.encode("utf-8")
     sha = hashlib.sha256(password_bytes).digest()
-    return bcrypt.hashpw(sha, bcrypt.gensalt())
+
+    hashed = bcrypt.hashpw(sha, bcrypt.gensalt())
+    return hashed.decode("utf-8")
 
 def verify_password(plain_password, hashed_password):
+    import bcrypt, hashlib
+
     password_bytes = plain_password.encode("utf-8")
     sha = hashlib.sha256(password_bytes).digest()
-    return bcrypt.checkpw(sha, hashed_password)
+
+    return bcrypt.checkpw(
+        sha,
+        hashed_password.encode("utf-8")
+    )
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()

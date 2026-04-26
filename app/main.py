@@ -96,7 +96,7 @@ def make_admin(db: Session = Depends(get_db)):
 # ─────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
+    allow_origins=["http://localhost:8083"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

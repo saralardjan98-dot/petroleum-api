@@ -15,6 +15,7 @@ class UserCreate(UserBase):
     password: str
     username: str
     full_name: str
+    role: str
 
     @field_validator("password")
     @classmethod
