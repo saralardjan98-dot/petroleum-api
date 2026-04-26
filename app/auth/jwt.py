@@ -10,6 +10,9 @@ from app.core.config import settings
 from app.database.session import get_db
 from app.models.user import User, UserRole
 from app.schemas.user import TokenData
+import hashlib
+import bcrypt
+
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -18,13 +21,16 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()
 
 
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
 
+def hash_password(password: str):
+    password_bytes = password.encode("utf-8")
+    sha = hashlib.sha256(password_bytes).digest()
+    return bcrypt.hashpw(sha, bcrypt.gensalt())
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
-
+def verify_password(plain_password, hashed_password):
+    password_bytes = plain_password.encode("utf-8")
+    sha = hashlib.sha256(password_bytes).digest()
+    return bcrypt.checkpw(sha, hashed_password)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()

@@ -7,7 +7,7 @@ from app.database.session import Base
 class Well(Base):
     __tablename__ = "wells"
 
-    id = Column(Integer, primary_key=True, index=True)
+    well_id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False, index=True)
     code = Column(String(100), unique=True, nullable=False, index=True)
     field = Column(String(255), nullable=False, index=True)   # Champ pétrolier
@@ -27,7 +27,7 @@ class Well(Base):
     is_active = Column(Boolean, default=True)
 
     # Foreign keys
-    owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    owner_id = Column(String, ForeignKey("users.id"), nullable=False)
 
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -37,6 +37,5 @@ class Well(Base):
     owner = relationship("User", back_populates="wells")
     petrophysical_files = relationship("PetrophysicalFile", back_populates="well", cascade="all, delete-orphan")
     analysis_results = relationship("AnalysisResult", back_populates="well", cascade="all, delete-orphan")
-
-    def __repr__(self):
-        return f"<Well(id={self.id}, code={self.code}, field={self.field})>"
+def __repr__(self):
+    return f"<Well(id={self.well_id}, code={self.code}, field={self.field})>"

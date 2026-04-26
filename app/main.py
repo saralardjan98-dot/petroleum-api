@@ -8,11 +8,17 @@ from fastapi.exceptions import RequestValidationError
 from app.core.config import settings
 from app.database.session import init_db
 from app.routes import auth, users, wells, files, curves, results
+from fastapi import FastAPI, Depends
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+from app.database.session import get_db
+from app.database.session import engine, Base, init_db
+from app.routes.auth import router as auth_router
 
 # ─────────────────────────────────────────────
 # Logging setup
 # ─────────────────────────────────────────────
-logging.basicConfig(
+logging.basicConfig( 
     level=getattr(logging, settings.LOG_LEVEL),
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
     handlers=[
@@ -32,11 +38,11 @@ async def lifespan(app: FastAPI):
     init_db()
     yield
     logger.info("🛑 Application shutdown")
-
-
+    
 # ─────────────────────────────────────────────
 # App factory
 # ─────────────────────────────────────────────
+Base.metadata.create_all(bind=engine)
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
@@ -66,14 +72,31 @@ Incluez-le dans le header: `Authorization: Bearer <token>`
     docs_url="/docs",
     redoc_url="/redoc",
 )
+from fastapi import Depends
+from sqlalchemy.orm import Session
+from sqlalchemy import text
+from app.database.session import get_db
 
-
+@app.get("/test-db")
+def test_db(db: Session = Depends(get_db)):
+    result = db.execute(text("SELECT 1")).fetchone()
+    return {"result": result[0]}
+    
+@app.get("/make-me-admin")
+def make_admin(db: Session = Depends(get_db)):
+    from app.models.user import User
+    user = db.query(User).filter(User.email == "user12@example.com").first()
+    if user:
+        user.role = "admin" 
+        db.commit()
+        return {"message": "You are now an Admin!"}
+    return {"error": "User not found"}
 # ─────────────────────────────────────────────
 # Middleware
 # ─────────────────────────────────────────────
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.allowed_origins_list,
+    allow_origins=["*"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -100,9 +123,12 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
     logger.error(f"Unhandled exception: {exc}", exc_info=True)
+
     return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"detail": "Erreur interne du serveur"},
+        status_code=500,
+        content={
+            "detail": str(exc)
+        },
     )
 
 
@@ -133,4 +159,5 @@ def health_check():
 
 @app.get("/", include_in_schema=False)
 def root():
+    print(settings.DATABASE_URL)
     return {"message": f"Bienvenue sur {settings.APP_NAME}", "docs": "/docs"}

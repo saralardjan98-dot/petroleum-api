@@ -19,7 +19,7 @@ class AuditLog(Base):
     status = Column(String(20), default="success")            # success, failed
 
     # Foreign keys
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    user_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
 
     # Timestamp
     created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)

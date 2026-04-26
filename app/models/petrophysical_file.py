@@ -23,7 +23,7 @@ class FileStatus(str, enum.Enum):
 class PetrophysicalFile(Base):
     __tablename__ = "petrophysical_files"
 
-    id = Column(Integer, primary_key=True, index=True)
+    file_id = Column(Integer, primary_key=True, index=True)
     filename = Column(String(255), nullable=False)
     original_filename = Column(String(255), nullable=False)
     file_path = Column(String(512), nullable=False)
@@ -52,8 +52,8 @@ class PetrophysicalFile(Base):
     extra_metadata = Column(JSON, nullable=True)     # Other LAS header info
 
     # Foreign keys
-    well_id = Column(Integer, ForeignKey("wells.id", ondelete="CASCADE"), nullable=False)
-    uploaded_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    well_id = Column(Integer, ForeignKey("wells.well_id", ondelete="CASCADE"), nullable=False)
+    uploaded_by = Column(String, ForeignKey("users.id"), nullable=False)
 
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -63,10 +63,8 @@ class PetrophysicalFile(Base):
     well = relationship("Well", back_populates="petrophysical_files")
     uploader = relationship("User", foreign_keys=[uploaded_by])
     curves = relationship("CurveData", back_populates="file", cascade="all, delete-orphan")
-
-    def __repr__(self):
-        return f"<PetrophysicalFile(id={self.id}, filename={self.filename}, status={self.status})>"
-
+def __repr__(self):
+    return f"<CurveData(well={self.well_id}, curve={self.curve_name}, depth={self.depth_m})>"
 
 class CurveData(Base):
     """
@@ -77,8 +75,8 @@ class CurveData(Base):
     __tablename__ = "curve_data"
 
     id = Column(Integer, primary_key=True, index=True)
-    file_id = Column(Integer, ForeignKey("petrophysical_files.id", ondelete="CASCADE"), nullable=False)
-    well_id = Column(Integer, ForeignKey("wells.id", ondelete="CASCADE"), nullable=False)  # Denormalized for fast queries
+    file_id = Column(Integer, ForeignKey("petrophysical_files.file_id", ondelete="CASCADE"), nullable=False)
+    well_id = Column(Integer, ForeignKey("wells.well_id", ondelete="CASCADE"), nullable=False)  # Denormalized for fast queries
     curve_name = Column(String(50), nullable=False, index=True)  # GR, RHOB, NPHI, etc.
     depth_m = Column(Float, nullable=False)
     value = Column(Float, nullable=True)  # NULL for missing data (-9999 converted to NULL)
@@ -92,6 +90,5 @@ class CurveData(Base):
 
     # Relationships
     file = relationship("PetrophysicalFile", back_populates="curves")
-
-    def __repr__(self):
-        return f"<CurveData(well={self.well_id}, curve={self.curve_name}, depth={self.depth_m})>"
+def __repr__(self):
+    return f"<PetrophysicalFile(id={self.file_id}, filename={self.filename}, status={self.status})>"

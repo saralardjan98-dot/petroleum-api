@@ -50,8 +50,8 @@ class AnalysisResult(Base):
     result_data = Column(JSON, nullable=True)
 
     # Foreign keys
-    well_id = Column(Integer, ForeignKey("wells.id", ondelete="CASCADE"), nullable=False)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    well_id = Column(Integer, ForeignKey("wells.well_id", ondelete="CASCADE"), nullable=False)
+    created_by = Column(String, ForeignKey("users.id"), nullable=False)
 
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())

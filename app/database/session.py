@@ -1,30 +1,42 @@
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
-from sqlalchemy.pool import NullPool
 from app.core.config import settings
 import logging
 
 logger = logging.getLogger(__name__)
 
-# Create engine with connection pooling
+
+# =========================
+# Database Engine
+# =========================
 engine = create_engine(
     settings.DATABASE_URL,
-    pool_pre_ping=True,       # Test connections before use
-    pool_size=10,             # Connection pool size
-    max_overflow=20,          # Extra connections allowed
-    pool_recycle=3600,        # Recycle connections after 1h
-    echo=settings.DEBUG,      # Log SQL in debug mode
+    connect_args={"check_same_thread": False} if "sqlite" in settings.DATABASE_URL else {},
+    echo=settings.DEBUG
 )
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# =========================
+# Session Factory
+# =========================
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine
+)
 
 
+# =========================
+# Base Class
+# =========================
 class Base(DeclarativeBase):
     pass
 
 
+# =========================
+# Dependency (FastAPI)
+# =========================
 def get_db():
-    """FastAPI dependency: provides a database session per request."""
     db = SessionLocal()
     try:
         yield db
@@ -35,8 +47,17 @@ def get_db():
         db.close()
 
 
+# =========================
+# Init DB
+# =========================
 def init_db():
-    """Create all tables on startup."""
-    from app.models import user, well, petrophysical_file, curve_data, analysis_result, audit_log
+    from app.models import (
+        user,
+        well,
+        petrophysical_file,
+        analysis_result,
+        audit_log
+    )
+
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables initialized")

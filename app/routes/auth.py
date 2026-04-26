@@ -1,3 +1,4 @@
+import traceback
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
@@ -16,30 +17,35 @@ from app.core.config import settings
 router = APIRouter(prefix="/auth", tags=["Authentification"])
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=UserResponse, status_code=201)
 def register(user_data: UserCreate, request: Request, db: Session = Depends(get_db)):
-    """Inscription d'un nouvel utilisateur."""
-    if db.query(User).filter(User.email == user_data.email).first():
-        raise HTTPException(status_code=400, detail="Email déjà utilisé")
-    if db.query(User).filter(User.username == user_data.username).first():
-        raise HTTPException(status_code=400, detail="Nom d'utilisateur déjà pris")
 
-    user = User(
-        email=user_data.email,
-        username=user_data.username,
-        full_name=user_data.full_name,
-        hashed_password=hash_password(user_data.password),
-    )
-    db.add(user)
-    db.flush()
-    log_action(db, Actions.REGISTER, user_id=user.id,
-               resource_type="user", resource_id=user.id,
-               ip_address=request.client.host)
-    db.commit()
-    db.refresh(user)
-    return user
+    try:
+        if db.query(User).filter(User.email == user_data.email).first():
+            raise HTTPException(status_code=400, detail="Email déjà utilisé")
 
+        if db.query(User).filter(User.username == user_data.username).first():
+            raise HTTPException(status_code=400, detail="Username déjà utilisé")
 
+        user = User(
+            email=user_data.email,
+            username=user_data.username,
+            display_name=user_data.full_name,
+            hashed_password=hash_password(user_data.password),
+        )
+
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        return user
+
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
 @router.post("/login", response_model=Token)
 def login(credentials: LoginRequest, request: Request, db: Session = Depends(get_db)):
     """Connexion et obtention des tokens JWT."""

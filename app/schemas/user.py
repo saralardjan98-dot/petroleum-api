@@ -7,11 +7,14 @@ from app.models.user import UserRole
 class UserBase(BaseModel):
     email: EmailStr
     username: str
-    full_name: Optional[str] = None
+    display_name: Optional[str] = None
 
 
 class UserCreate(UserBase):
+    email: EmailStr
     password: str
+    username: str
+    full_name: str
 
     @field_validator("password")
     @classmethod
@@ -35,19 +38,20 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
-    full_name: Optional[str] = None
+    display_name: Optional[str] = None
     email: Optional[EmailStr] = None
 
 
-class UserResponse(UserBase):
-    id: int
-    role: UserRole
-    is_active: bool
+class UserResponse(BaseModel):
+    id: str          
+    display_name: Optional[str] 
+    email: str
+    role: str
     created_at: datetime
-    last_login: Optional[datetime] = None
+    is_active: bool
 
-    model_config = {"from_attributes": True}
-
+    class Config:
+        from_attributes = True 
 
 class UserAdminUpdate(BaseModel):
     role: Optional[UserRole] = None
