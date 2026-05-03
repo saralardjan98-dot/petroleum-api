@@ -14,6 +14,7 @@ from sqlalchemy import text
 from app.database.session import get_db
 from app.database.session import engine, Base, init_db
 from app.routes.auth import router as auth_router
+from fastapi import FastAPI
 
 # ─────────────────────────────────────────────
 # Logging setup
@@ -94,9 +95,10 @@ def make_admin(db: Session = Depends(get_db)):
 # ─────────────────────────────────────────────
 # Middleware
 # ─────────────────────────────────────────────
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8083"], 
+    allow_origins=["http://localhost:8080"],  # frontend
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -136,14 +138,13 @@ async def generic_exception_handler(request: Request, exc: Exception):
 # Routers
 # ─────────────────────────────────────────────
 API_PREFIX = "/api/v1"
-
+app.include_router(auth.router, prefix=f"{API_PREFIX}/auth", tags=["Authentification"])
 app.include_router(auth.router, prefix=API_PREFIX)
 app.include_router(users.router, prefix=API_PREFIX)
-app.include_router(wells.router, prefix=API_PREFIX)
 app.include_router(files.router, prefix=API_PREFIX)
 app.include_router(curves.router, prefix=API_PREFIX)
 app.include_router(results.router, prefix=API_PREFIX)
-
+app.include_router(wells.router, prefix="/api/v1")
 
 # ─────────────────────────────────────────────
 # Health check

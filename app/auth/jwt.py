@@ -59,21 +59,17 @@ def create_refresh_token(data: dict) -> str:
 def decode_token(token: str) -> TokenData:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id: int = payload.get("sub")
+
+        user_id: str = payload.get("sub")
         role: str = payload.get("role")
-        if user_id is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token invalide",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        return TokenData(user_id=int(user_id), role=role)
+
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Token invalide")
+
+        return TokenData(user_id=user_id, role=role)
+
     except JWTError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token invalide ou expiré",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise HTTPException(status_code=401, detail="Token invalide ou expiré")
 
 
 # ─────────────────────────────────────────────
@@ -88,8 +84,9 @@ def get_current_user(
     user = db.query(User).filter(User.id == token_data.user_id).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Utilisateur introuvable")
-    if not user.is_active:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Compte désactivé")
+    #if not user.is_active:
+        #raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Compte désactivé")
+    db.expunge(user)
     return user
 
 

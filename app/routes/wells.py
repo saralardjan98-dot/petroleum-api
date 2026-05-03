@@ -14,7 +14,7 @@ router = APIRouter(prefix="/wells", tags=["Puits"])
 
 
 def get_well_or_404(well_id: int, db: Session) -> Well:
-    well = db.query(Well).filter(Well.id == well_id, Well.is_active == True).first()
+    well = db.query(Well).filter(well.well_id == well_id, Well.is_active == True).first()
     if not well:
         raise HTTPException(status_code=404, detail="Puits introuvable")
     return well
@@ -41,11 +41,12 @@ def create_well(
     db.add(well)
     db.flush()
     log_action(db, Actions.CREATE_WELL, user_id=current_user.id,
-               resource_type="well", resource_id=well.id,
+               resource_id=well.well_id,
                description=f"Puits créé: {well.name} ({well.code})",
                ip_address=request.client.host)
     db.commit()
     db.refresh(well)
+    
     return well
 
 
@@ -90,7 +91,8 @@ def list_wells(
 
     total = query.count()
     items = query.order_by(Well.created_at.desc()).offset((page - 1) * size).limit(size).all()
-
+    for item in items:
+     db.expunge(item)
     return PaginatedWells(
         items=items,
         total=total,
@@ -128,6 +130,7 @@ def get_well(
     """Détail d'un puits."""
     well = get_well_or_404(well_id, db)
     check_well_access(well, current_user)
+    db.expunge(well) # أضيفي هذا
     return well
 
 

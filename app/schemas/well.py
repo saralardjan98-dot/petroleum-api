@@ -1,6 +1,8 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator ,ConfigDict, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime
+
+
 
 
 class WellBase(BaseModel):
@@ -58,14 +60,21 @@ class WellUpdate(BaseModel):
     description: Optional[str] = None
 
 
-class WellResponse(WellBase):
-    id: int
-    owner_id: int
-    is_active: bool
+class WellResponse(BaseModel):
+    # نستخدم Field لربط id بـ well_id الموجود في قاعدة البيانات
+    id: int = Field(alias="well_id") 
+    name: str
+    code: str
+    field: str
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    # تغيير النوع إلى str لأن معرفات المستخدمين عندك هي UUID
+    owner_id: str 
+    status: Optional[str] = None
     created_at: datetime
-    updated_at: Optional[datetime] = None
 
-    model_config = {"from_attributes": True}
+    # هذا السطر ضروري جداً لكي يفهم Pydantic كيفية التعامل مع جداول SQLAlchemy
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
 
 class WellMapResponse(BaseModel):

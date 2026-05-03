@@ -37,5 +37,5 @@ class Well(Base):
     owner = relationship("User", back_populates="wells")
     petrophysical_files = relationship("PetrophysicalFile", back_populates="well", cascade="all, delete-orphan")
     analysis_results = relationship("AnalysisResult", back_populates="well", cascade="all, delete-orphan")
-def __repr__(self):
-    return f"<Well(id={self.well_id}, code={self.code}, field={self.field})>"
+#def __repr__(self):
+    #return f"<Well(id={self.well_id}, code={self.code}, field={self.field})>"

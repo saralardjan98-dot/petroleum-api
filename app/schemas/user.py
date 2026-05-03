@@ -49,7 +49,7 @@ class UserResponse(BaseModel):
     email: str
     role: str
     created_at: datetime
-    is_active: bool
+   
 
     class Config:
         from_attributes = True 
@@ -68,7 +68,7 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    user_id: Optional[int] = None
+    user_id: Optional[str] = None
     role: Optional[str] = None
 
 

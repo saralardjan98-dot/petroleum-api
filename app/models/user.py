@@ -32,5 +32,5 @@ class User(Base):
     audit_logs = relationship("AuditLog", back_populates="user", lazy="select")
 
    
-    def __repr__(self):
-        return f"<User(id={self.id}, username={self.username}, role={self.role})>"
+    #def __repr__(self):
+        #return f"<User(id={self.id}, username={self.username}, role={self.role})>"
